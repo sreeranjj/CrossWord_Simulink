@@ -1,166 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crossword Puzzle</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulink Crossword</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
-      padding-top: 20px;
-      background-color: #ffffff;
+      padding: 20px 10px 40px;
+      background: #ffffff;
     }
 
     .container {
       text-align: center;
-      width: 90%;
-      max-width: 400px;
-      position: relative;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #555;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
       gap: 2px;
       margin: 20px auto;
+      width: min(90vw, 560px);
+      aspect-ratio: 1 / 1;
     }
 
     .cell {
       position: relative;
-      width: 100%;
-      padding-top: 100%;
       background-color: #fff;
       border: 1px solid #000;
       box-sizing: border-box;
+      aspect-ratio: 1 / 1;
     }
 
     .cell input {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       border: none;
       text-align: center;
-      font-size: 1.2em;
+      font-size: clamp(0.8rem, 2vw, 1.1rem);
       font-weight: bold;
       background-color: transparent;
       outline: none;
+      text-transform: uppercase;
     }
 
     .cell[data-black="true"] {
       background-color: #000;
+      border-color: #000;
     }
 
     .cell .number {
       position: absolute;
       top: 2px;
-      left: 2px;
-      font-size: 0.7em;
-      color: #333;
+      left: 3px;
+      font-size: 0.62rem;
+      color: #222;
+      line-height: 1;
+      z-index: 2;
     }
 
-    .highlighted {
+    .correct {
+      background-color: #e8f5e9 !important;
+    }
+
+    .completed {
       background-color: #fff9c4 !important;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      align-items: start;
     }
 
     .clues {
       text-align: left;
       margin: 0 auto;
-      max-width: 300px;
+      max-width: 700px;
+    }
+
+    .clue-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
     }
 
     .clues h3 {
-      margin-top: 0;
+      margin: 0 0 10px;
     }
 
     .clues ul {
-      list-style-type: none;
-      padding-left: 0;
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
 
     .clues li {
       margin-bottom: 10px;
-      font-size: 0.9em;
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    .actions {
+      margin: 16px 0 8px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 1px solid #222;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #f5f5f5;
+    }
+
+    .message {
+      min-height: 24px;
+      font-weight: 600;
+      color: #2e7d32;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 700px) {
+      .clue-columns {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Solve Me</h1>
-    <div class="grid" id="grid">
-      <!-- Crossword Cells will be generated here -->
-    </div>
-    <div class="clues">
-      <h3>Across</h3>
-      <ul>
-        <li><strong>1A:</strong> If you're ____ and you know it, clap your hands</li>
-        <li><strong>6A:</strong> Jared of "Dallas Buyers Club"</li>
-        <li><strong>7A:</strong> Ice cream scoop holders</li>
-        <li><strong>8A:</strong> 12 months</li>
-        <li><strong>9A:</strong> ____ and painful death</li>
-      </ul>
-      <h3>Down</h3>
-      <ul>
-        <li><strong>2D:</strong> Healing plants</li>
-        <li><strong>3D:</strong> Of prisons</li>
-        <li><strong>4D:</strong> Wing: Prefix</li>
-        <li><strong>5D:</strong> Casual greetings</li>
-        <li><strong>7D:</strong> Texter's "Ta-ta!"</li>
-      </ul>
+    <h1>Simulink Crossword</h1>
+    <div class="subtitle">A model-based design themed puzzle</div>
+
+    <div class="layout">
+      <div>
+        <div class="grid" id="grid"></div>
+
+        <div class="actions">
+          <button id="checkBtn">Check Puzzle</button>
+          <button id="revealBtn">Reveal Answers</button>
+          <button id="resetBtn">Clear</button>
+        </div>
+
+        <div class="message" id="message"></div>
+      </div>
+
+      <div class="clues">
+        <div class="clue-columns">
+          <div>
+            <h3>Across</h3>
+            <ul id="acrossClues"></ul>
+          </div>
+          <div>
+            <h3>Down</h3>
+            <ul id="downClues"></ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    // Crossword Puzzle Grid Configuration
-    const crossword = [
-      ["H", "A", "P", "P", "Y"],
-      [null, "L", "E", "T", "O"],
-      ["C", "O", "N", "E", "S"],
-      ["Y", "E", "A", "R", null],
-      ["A", "S", "L", "O", "W"]
+    const GRID_SIZE = 13;
+
+    // Word placements
+    // dir: "across" or "down"
+    const entries = [
+      { word: "SIMULINK", row: 0, col: 5, dir: "across", clue: "MATLAB's block-diagram environment for modeling and simulation" },
+      { word: "SOLVER",   row: 0, col: 5, dir: "down",   clue: "Simulation setting that determines how model equations are numerically handled" },
+      { word: "SIGNAL",   row: 2, col: 0, dir: "across", clue: "Data flowing along a line between blocks" },
+      { word: "MODEL",    row: 0, col: 7, dir: "down",   clue: "A Simulink system representation" },
+      { word: "BLOCK",    row: 4, col: 6, dir: "across", clue: "Basic building unit in Simulink" },
+      { word: "SCOPE",    row: 2, col: 0, dir: "down",   clue: "Sink block used to visualize signals" },
+      { word: "STATE",    row: 0, col: 4, dir: "down",   clue: "A condition or mode often tracked in Stateflow" },
+      { word: "CODER",    row: 4, col: 9, dir: "down",   clue: "HDL ____ / Simulink ____; tool used for code generation" },
+      { word: "TEST",     row: 3, col: 4, dir: "down",   clue: "Simulink ____ Manager supports this activity" },
+      { word: "PORT",     row: 5, col: 0, dir: "across", clue: "Connection point for inports or outports" },
+      { word: "MASK",     row: 1, col: 10, dir: "down",  clue: "Feature used to customize a block interface" },
+      { word: "HDL",      row: 2, col: 6, dir: "across", clue: "Hardware Description Language" },
+      { word: "BUS",      row: 4, col: 6, dir: "down",   clue: "Grouped signal object used to bundle elements together" }
     ];
-
-    const blackCells = [
-      { row: 1, col: 0 },
-      { row: 3, col: 4 }
-    ];
-
-    const clueNumbers = {
-      "1A": { row: 0, col: 0 },
-      "1D": { row: 0, col: 0 },
-      "2D": { row: 0, col: 1 },
-      "6A": { row: 1, col: 1 },
-      "3D": { row: 0, col: 2 },
-      "7A": { row: 2, col: 0 },
-      "4D": { row: 0, col: 3 },
-      "8A": { row: 3, col: 0 },
-      "5D": { row: 0, col: 4 },
-      "9A": { row: 4, col: 0 },
-      "7D": { row: 2, col: 0 }
-    };
-
-    const highlightWords = {
-      "HAPPY": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
-      "YEAR": [[3, 0], [3, 1], [3, 2], [3, 3]],
-      "ONE": [[2, 1], [2, 2], [2, 3]],
-      "ALOE": [[0, 1], [2, 1], [3, 1]] // Removed [1, 1] to exclude the L
-    };
 
     const gridElement = document.getElementById("grid");
+    const acrossCluesElement = document.getElementById("acrossClues");
+    const downCluesElement = document.getElementById("downClues");
+    const messageElement = document.getElementById("message");
+
+    const solutionMap = new Map();
+    const startMap = new Map();
+    const numbering = new Map();
+
+    function key(row, col) {
+      return `${row},${col}`;
+    }
+
+    function buildSolution() {
+      for (const entry of entries) {
+        for (let i = 0; i < entry.word.length; i++) {
+          const row = entry.row + (entry.dir === "down" ? i : 0);
+          const col = entry.col + (entry.dir === "across" ? i : 0);
+          const k = key(row, col);
+          const letter = entry.word[i];
+
+          if (solutionMap.has(k) && solutionMap.get(k) !== letter) {
+            console.error(`Conflict at ${k}: ${solutionMap.get(k)} vs ${letter}`);
+          }
+          solutionMap.set(k, letter);
+        }
+      }
+    }
+
+    function isLetterCell(row, col) {
+      return solutionMap.has(key(row, col));
+    }
+
+    function computeNumbering() {
+      let count = 1;
+
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          if (!isLetterCell(row, col)) continue;
+
+          const startsAcross = isLetterCell(row, col) && !isLetterCell(row, col - 1) && isLetterCell(row, col + 1);
+          const startsDown = isLetterCell(row, col) && !isLetterCell(row - 1, col) && isLetterCell(row + 1, col);
+
+          if (startsAcross || startsDown) {
+            numbering.set(key(row, col), count++);
+          }
+        }
+      }
+
+      for (const entry of entries) {
+        const num = numbering.get(key(entry.row, entry.col));
+        entry.number = num;
+      }
+    }
 
     function generateGrid() {
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
+      gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
           const cell = document.createElement("div");
           cell.classList.add("cell");
 
-          if (isBlackCell(row, col)) {
+          if (!isLetterCell(row, col)) {
             cell.dataset.black = "true";
           } else {
             const input = document.createElement("input");
@@ -171,12 +282,10 @@
             input.addEventListener("keydown", (e) => handleKeyDown(e, row, col));
             cell.appendChild(input);
 
-            // Get all clue numbers for this cell
-            const numbers = getClueNumbers(row, col);
-            if (numbers.length > 0) {
+            if (numbering.has(key(row, col))) {
               const numberLabel = document.createElement("div");
               numberLabel.classList.add("number");
-              numberLabel.textContent = numbers.join(',');
+              numberLabel.textContent = numbering.get(key(row, col));
               cell.appendChild(numberLabel);
             }
           }
@@ -186,149 +295,212 @@
       }
     }
 
-    function isBlackCell(row, col) {
-      return blackCells.some(cell => cell.row === row && cell.col === col);
+    function renderClues() {
+      const across = entries
+        .filter(e => e.dir === "across")
+        .sort((a, b) => a.number - b.number);
+
+      const down = entries
+        .filter(e => e.dir === "down")
+        .sort((a, b) => a.number - b.number);
+
+      across.forEach(entry => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${entry.number}A:</strong> ${entry.clue}`;
+        acrossCluesElement.appendChild(li);
+      });
+
+      down.forEach(entry => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${entry.number}D:</strong> ${entry.clue}`;
+        downCluesElement.appendChild(li);
+      });
     }
 
-    function getClueNumbers(row, col) {
-      const numbers = new Set();
-      for (const [key, value] of Object.entries(clueNumbers)) {
-        if (value.row === row && value.col === col) {
-          numbers.add(key.slice(0, -1));
-        }
+    function getInput(row, col) {
+      return document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+    }
+
+    function handleInput(e, row, col) {
+      const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "");
+      e.target.value = value;
+      messageElement.textContent = "";
+
+      if (value) {
+        moveToNextCell(row, col);
       }
-      return Array.from(numbers).sort();
     }
 
     function handleKeyDown(e, row, col) {
-      if (e.key === "Backspace") {
-        if (e.target.value === "") {
-          e.preventDefault();
-          moveToPreviousCell(row, col);
+      if (e.key === "Backspace" && e.target.value === "") {
+        e.preventDefault();
+        moveToPreviousCell(row, col);
+      }
+
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        moveDirectional(row, col, 0, 1);
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        moveDirectional(row, col, 0, -1);
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        moveDirectional(row, col, 1, 0);
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        moveDirectional(row, col, -1, 0);
+      }
+    }
+
+    function moveDirectional(row, col, dr, dc) {
+      let r = row + dr;
+      let c = col + dc;
+
+      while (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+        if (isLetterCell(r, c)) {
+          const input = getInput(r, c);
+          if (input) input.focus();
+          return;
+        }
+        r += dr;
+        c += dc;
+      }
+    }
+
+    function moveToNextCell(row, col) {
+      for (let r = row; r < GRID_SIZE; r++) {
+        let startCol = r === row ? col + 1 : 0;
+        for (let c = startCol; c < GRID_SIZE; c++) {
+          if (isLetterCell(r, c)) {
+            const input = getInput(r, c);
+            if (input) {
+              input.focus();
+              return;
+            }
+          }
         }
       }
     }
 
     function moveToPreviousCell(row, col) {
-      let prevCol = col - 1;
-      let prevRow = row;
-      
-      while (prevCol >= 0) {
-        if (!isBlackCell(prevRow, prevCol)) {
-          const prevInput = document.querySelector(`input[data-row="${prevRow}"][data-col="${prevCol}"]`);
-          if (prevInput) {
-            prevInput.focus();
-            return;
-          }
-        }
-        prevCol--;
-      }
-
-      if (prevCol < 0 && row > 0) {
-        prevRow = row - 1;
-        prevCol = 4;
-        while (prevCol >= 0) {
-          if (!isBlackCell(prevRow, prevCol)) {
-            const prevInput = document.querySelector(`input[data-row="${prevRow}"][data-col="${prevCol}"]`);
-            if (prevInput) {
-              prevInput.focus();
+      for (let r = row; r >= 0; r--) {
+        let startCol = r === row ? col - 1 : GRID_SIZE - 1;
+        for (let c = startCol; c >= 0; c--) {
+          if (isLetterCell(r, c)) {
+            const input = getInput(r, c);
+            if (input) {
+              input.focus();
               return;
             }
           }
-          prevCol--;
         }
       }
     }
 
-    function handleInput(e, row, col) {
-      if (e.inputType === "insertText" && e.data) {
-        const letter = e.data.toUpperCase();
-        e.target.value = letter;
+    function checkPuzzle() {
+      let allCorrect = true;
+      let allFilled = true;
 
-        let nextCol = col + 1;
-        let nextRow = row;
-        while (nextCol < 5) {
-          if (!isBlackCell(nextRow, nextCol)) {
-            const nextInput = document.querySelector(`input[data-row="${nextRow}"][data-col="${nextCol}"]`);
-            if (nextInput) {
-              nextInput.focus();
-              break;
-            }
-          }
-          nextCol++;
-        }
+      document.querySelectorAll(".cell input").forEach(input => {
+        const row = parseInt(input.dataset.row, 10);
+        const col = parseInt(input.dataset.col, 10);
+        const expected = solutionMap.get(key(row, col));
+        const actual = input.value.toUpperCase();
 
-        checkCompletion();
-      }
-    }
+        input.parentElement.classList.remove("correct", "completed");
 
-    function checkCompletion() {
-      let isComplete = true;
-      const inputs = document.querySelectorAll('.cell:not([data-black="true"]) input');
-
-      inputs.forEach(input => {
-        const row = parseInt(input.dataset.row);
-        const col = parseInt(input.dataset.col);
-        
-        if (!crossword[row][col] || input.value.toUpperCase() !== crossword[row][col]) {
-          isComplete = false;
+        if (!actual) {
+          allFilled = false;
+          allCorrect = false;
+        } else if (actual === expected) {
+          input.parentElement.classList.add("correct");
+        } else {
+          allCorrect = false;
         }
       });
 
-      if (isComplete) {
+      if (allCorrect && allFilled) {
         celebrateCompletion();
+      } else if (!allFilled) {
+        messageElement.textContent = "Keep going — the puzzle is not complete yet.";
+      } else {
+        messageElement.textContent = "Some letters need correction.";
       }
     }
 
     function celebrateCompletion() {
-      highlightCompletedPuzzle();
-      
-      for (let i = 0; i < 100; i++) {
-        createConfetti();
-      }
+      document.querySelectorAll(".cell input").forEach(input => {
+        input.parentElement.classList.remove("correct");
+        input.parentElement.classList.add("completed");
+      });
+
+      messageElement.textContent = "Nice work — Simulink crossword solved!";
+      for (let i = 0; i < 100; i++) createConfetti();
+    }
+
+    function revealAnswers() {
+      document.querySelectorAll(".cell input").forEach(input => {
+        const row = parseInt(input.dataset.row, 10);
+        const col = parseInt(input.dataset.col, 10);
+        input.value = solutionMap.get(key(row, col));
+      });
+      checkPuzzle();
+    }
+
+    function clearPuzzle() {
+      document.querySelectorAll(".cell input").forEach(input => {
+        input.value = "";
+        input.parentElement.classList.remove("correct", "completed");
+      });
+      messageElement.textContent = "";
     }
 
     function createConfetti() {
-      const confetti = document.createElement('div');
-      confetti.style.position = 'fixed';
-      confetti.style.width = '10px';
-      confetti.style.height = '10px';
+      const confetti = document.createElement("div");
+      confetti.style.position = "fixed";
+      confetti.style.width = "10px";
+      confetti.style.height = "10px";
+      confetti.style.left = Math.random() * 100 + "vw";
+      confetti.style.top = "-10px";
+      confetti.style.zIndex = "999";
+      confetti.style.opacity = "1";
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
       confetti.style.backgroundColor = getRandomColor();
-      confetti.style.left = Math.random() * 100 + 'vw';
-      confetti.style.top = '-10px';
-      confetti.style.zIndex = '999';
-      confetti.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
       document.body.appendChild(confetti);
 
-      const animation = confetti.animate([
-        { transform: 'translate(0, 0) rotate(0)', opacity: 1 },
-        { transform: `translate(${Math.random() * 100 - 50}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-      ], {
-        duration: 1000 + Math.random() * 1000,
-        easing: 'cubic-bezier(0,0,0.2,1)'
-      });
+      const animation = confetti.animate(
+        [
+          { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+          {
+            transform: `translate(${Math.random() * 120 - 60}px, ${window.innerHeight + 50}px) rotate(${Math.random() * 720}deg)`,
+            opacity: 0
+          }
+        ],
+        {
+          duration: 1000 + Math.random() * 1200,
+          easing: "cubic-bezier(0,0,0.2,1)"
+        }
+      );
 
       animation.onfinish = () => confetti.remove();
     }
 
     function getRandomColor() {
-      const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50', '#9c27b0'];
+      const colors = ["#f44336", "#2196f3", "#ffeb3b", "#4caf50", "#9c27b0", "#ff9800"];
       return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    function highlightCompletedPuzzle() {
-      for (const [word, cells] of Object.entries(highlightWords)) {
-        cells.forEach(([row, col]) => {
-          const cellIndex = row * 5 + col;
-          const cell = gridElement.children[cellIndex];
-          if (cell) {
-            cell.classList.add('highlighted');
-          }
-        });
-      }
-    }
+    document.getElementById("checkBtn").addEventListener("click", checkPuzzle);
+    document.getElementById("revealBtn").addEventListener("click", revealAnswers);
+    document.getElementById("resetBtn").addEventListener("click", clearPuzzle);
 
+    buildSolution();
+    computeNumbering();
     generateGrid();
+    renderClues();
   </script>
 </body>
 </html>
